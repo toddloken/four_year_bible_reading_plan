@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4-Year Bible Reading Plan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border: 2px solid #3498db;
+            background: white;
+            color: #3498db;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .nav-btn.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .year-container {
+            display: none;
+        }
+
+        .year-container.active {
+            display: block;
+        }
+
+        .monthly-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .monthly-section h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 20px;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .quarters-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .quarter {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-top: 4px solid #3498db;
+        }
+
+        .quarter-title {
+            font-weight: bold;
+            color: #3498db;
+            font-size: 16px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .month-item {
+            margin-bottom: 10px;
+        }
+
+        .month-name {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .month-books {
+            color: #555;
+            font-size: 13px;
+        }
+
+        .daily-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .daily-section h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 20px;
+            border-bottom: 3px solid #e74c3c;
+            padding-bottom: 10px;
+        }
+
+        .daily-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .daily-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .day-item {
+            padding: 8px;
+            background: #fef5f1;
+            border-radius: 4px;
+            border-left: 3px solid #e74c3c;
+            font-size: 13px;
+        }
+
+        .day-number {
+            font-weight: bold;
+            color: #e74c3c;
+            margin-right: 5px;
+        }
+
+        .day-reference {
+            color: #555;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 18px;
+            color: #666;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .nav-buttons {
+                display: none;
+            }
+            .year-container {
+                display: block !important;
+                page-break-after: always;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .quarters-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .daily-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .quarters-grid {
+                grid-template-columns: 1fr;
+            }
+            .daily-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .daily-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>4-Year Bible Reading Plan</h1>
+        <div class="nav-buttons">
+            <button class="nav-btn active" onclick="showYear(1)">Year 1</button>
+            <button class="nav-btn" onclick="showYear(2)">Year 2</button>
+            <button class="nav-btn" onclick="showYear(3)">Year 3</button>
+            <button class="nav-btn" onclick="showYear(4)">Year 4</button>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">Loading reading plan...</div>
+
+    <div id="year-1" class="year-container active"></div>
+    <div id="year-2" class="year-container"></div>
+    <div id="year-3" class="year-container"></div>
+    <div id="year-4" class="year-container"></div>
+
+    <script>
+        let monthlyData = null;
+        let dailyData = null;
+
+        async function loadData() {
+            try {
+                const [monthlyResponse, dailyResponse] = await Promise.all([
+                    fetch('four_year_grouping_plan.json'),
+                    fetch('four_year_daily_supplement.json')
+                ]);
+
+                monthlyData = await monthlyResponse.json();
+                dailyData = await dailyResponse.json();
+
+                renderYears();
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                document.getElementById('loading').innerHTML =
+                    'Error loading data. Make sure the JSON files are in the same folder as this HTML file.';
+                console.error('Error loading data:', error);
+            }
+        }
+
+        function renderYears() {
+            for (let year = 1; year <= 4; year++) {
+                const container = document.getElementById(`year-${year}`);
+                container.innerHTML = `
+                    <div class="monthly-section">
+                        <h2>Monthly Reading</h2>
+                        ${renderMonthlyQuarterly(year)}
+                    </div>
+                    <div class="daily-section">
+                        <h2>Daily Supplement</h2>
+                        ${renderDaily(year)}
+                    </div>
+                `;
+            }
+        }
+
+        function renderMonthlyQuarterly(year) {
+            const yearKey = `year_${year}`;
+            const months = monthlyData[yearKey];
+
+            const quarters = [
+                { title: 'Q1 (Jan-Mar)', months: months.slice(0, 3) },
+                { title: 'Q2 (Apr-Jun)', months: months.slice(3, 6) },
+                { title: 'Q3 (Jul-Sep)', months: months.slice(6, 9) },
+                { title: 'Q4 (Oct-Dec)', months: months.slice(9, 12) }
+            ];
+
+            return `
+                <div class="quarters-grid">
+                    ${quarters.map(quarter => `
+                        <div class="quarter">
+                            <div class="quarter-title">${quarter.title}</div>
+                            ${quarter.months.map(month => `
+                                <div class="month-item">
+                                    <div class="month-name">${month.month}</div>
+                                    <div class="month-books">${month.books}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderDaily(year) {
+            const yearKey = `year_${year}`;
+            const days = dailyData[yearKey].days;
+
+            const daysPerColumn = Math.ceil(days.length / 4);
+            const columns = [
+                days.slice(0, daysPerColumn),
+                days.slice(daysPerColumn, daysPerColumn * 2),
+                days.slice(daysPerColumn * 2, daysPerColumn * 3),
+                days.slice(daysPerColumn * 3)
+            ];
+
+            return `
+                <div class="daily-grid">
+                    ${columns.map(column => `
+                        <div class="daily-column">
+                            ${column.map(day => day.references ? `
+                                <div class="day-item">
+                                    <span class="day-number">Day ${day.day}:</span>
+                                    <span class="day-reference">${day.references}</span>
+                                </div>
+                            ` : '').join('')}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function showYear(year) {
+            // Hide all years
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`year-${i}`).classList.remove('active');
+            }
+
+            // Show selected year
+            document.getElementById(`year-${year}`).classList.add('active');
+
+            // Update button states
+            document.querySelectorAll('.nav-btn').forEach((btn, index) => {
+                btn.classList.toggle('active', index + 1 === year);
+            });
+        }
+
+        // Load data when page loads
+        loadData();
+    </script>
+</body>
+</html>

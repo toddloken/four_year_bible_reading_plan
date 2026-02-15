@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export to Excel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .year-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .excel-btn {
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .excel-btn:hover {
+            background: #229954;
+        }
+
+        .excel-btn:active {
+            transform: scale(0.98);
+        }
+
+        .all-btn {
+            grid-column: 1 / -1;
+            background: #3498db;
+        }
+
+        .all-btn:hover {
+            background: #2980b9;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Export Bible Reading Plan</h1>
+
+        <div class="year-buttons">
+            <button class="excel-btn" onclick="exportYear(1)">📥 Year 1</button>
+            <button class="excel-btn" onclick="exportYear(2)">📥 Year 2</button>
+            <button class="excel-btn" onclick="exportYear(3)">📥 Year 3</button>
+            <button class="excel-btn" onclick="exportYear(4)">📥 Year 4</button>
+            <button class="excel-btn all-btn" onclick="exportAllYears()">📥 All 4 Years</button>
+        </div>
+
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        let monthlyData = null;
+        let dailyData = null;
+
+        async function loadData() {
+            try {
+                const [monthlyResponse, dailyResponse] = await Promise.all([
+                    fetch('four_year_grouping_plan.json'),
+                    fetch('four_year_daily_supplement.json')
+                ]);
+
+                monthlyData = await monthlyResponse.json();
+                dailyData = await dailyResponse.json();
+            } catch (error) {
+                showStatus('Error: JSON files not found', 'error');
+            }
+        }
+
+        function exportYear(year) {
+            if (!monthlyData || !dailyData) {
+                showStatus('Loading data...', 'error');
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+            const yearKey = `year_${year}`;
+
+            const monthlySheet = createMonthlySheet(monthlyData[yearKey]);
+            XLSX.utils.book_append_sheet(wb, monthlySheet, 'Monthly Reading');
+
+            const dailySheet = createDailySheet(dailyData[yearKey].days);
+            XLSX.utils.book_append_sheet(wb, dailySheet, 'Daily Supplement');
+
+            XLSX.writeFile(wb, `Year_${year}_Reading_Plan.xlsx`);
+            showStatus(`Year ${year} exported successfully!`, 'success');
+        }
+
+        function exportAllYears() {
+            if (!monthlyData || !dailyData) {
+                showStatus('Loading data...', 'error');
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+
+            for (let year = 1; year <= 4; year++) {
+                const yearKey = `year_${year}`;
+
+                const monthlySheet = createMonthlySheet(monthlyData[yearKey]);
+                XLSX.utils.book_append_sheet(wb, monthlySheet, `Year ${year} Monthly`);
+
+                const dailySheet = createDailySheet(dailyData[yearKey].days);
+                XLSX.utils.book_append_sheet(wb, dailySheet, `Year ${year} Daily`);
+            }
+
+            XLSX.writeFile(wb, 'Four_Year_Reading_Plan.xlsx');
+            showStatus('All 4 years exported successfully!', 'success');
+        }
+
+        function createMonthlySheet(months) {
+            const data = [['Month', 'Books']];
+
+            months.forEach(month => {
+                data.push([month.month, month.books]);
+            });
+
+            return XLSX.utils.aoa_to_sheet(data);
+        }
+
+        function createDailySheet(days) {
+            const data = [['Day', 'References']];
+
+            days.forEach(day => {
+                if (day.references) {
+                    data.push([day.day, day.references]);
+                }
+            });
+
+            return XLSX.utils.aoa_to_sheet(data);
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
