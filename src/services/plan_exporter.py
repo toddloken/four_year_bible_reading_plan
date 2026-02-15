@@ -40,8 +40,8 @@ class PlanExporter:
     def _write_monthly(wb: Workbook, yearly: Dict[int, List[MonthlyReading]]) -> None:
         ws = wb.active
         ws.title = 'monthly_out'
-        headers = ['Year', 'Month', 'Grouping', 'Books', 'Chapters', 'Words']
-        col_widths = [8, 12, 10, 45, 10, 12]
+        headers = ['Year-Month', 'Year', 'Month', 'Grouping', 'Books', 'Chapters', 'Words']
+        col_widths = [14, 8, 12, 10, 45, 10, 12]
 
         for col, (header, width) in enumerate(zip(headers, col_widths), 1):
             cell = ws.cell(row=1, column=col, value=header)
@@ -54,26 +54,27 @@ class PlanExporter:
         for year in range(1, 5):
             for mr in yearly[year]:
                 books = mr.book_names
-                ws.cell(row=row, column=1, value=year).font = DATA_FONT
-                ws.cell(row=row, column=2, value=mr.month_name).font = DATA_FONT
-                ws.cell(row=row, column=3, value=mr.grouping).font = DATA_FONT
-                ws.cell(row=row, column=4, value=books).font = DATA_FONT
-                ws.cell(row=row, column=5, value=len(mr.chapters)).font = DATA_FONT
-                cell = ws.cell(row=row, column=6, value=mr.total_words)
+                ws.cell(row=row, column=1, value=f'{year}-{mr.month_name}').font = DATA_FONT
+                ws.cell(row=row, column=2, value=year).font = DATA_FONT
+                ws.cell(row=row, column=3, value=mr.month_name).font = DATA_FONT
+                ws.cell(row=row, column=4, value=mr.grouping).font = DATA_FONT
+                ws.cell(row=row, column=5, value=books).font = DATA_FONT
+                ws.cell(row=row, column=6, value=len(mr.chapters)).font = DATA_FONT
+                cell = ws.cell(row=row, column=7, value=mr.total_words)
                 cell.font = DATA_FONT
                 cell.number_format = '#,##0'
-                for c in range(1, 7):
+                for c in range(1, 8):
                     ws.cell(row=row, column=c).border = THIN_BORDER
                 row += 1
 
-        ws.auto_filter.ref = f'A1:F{row - 1}'
+        ws.auto_filter.ref = f'A1:G{row - 1}'
         ws.freeze_panes = 'A2'
 
     @staticmethod
     def _write_daily(wb: Workbook, yearly: Dict[int, List[ReadingDay]]) -> None:
         ws = wb.create_sheet('daily_out')
-        headers = ['Year', 'Day', 'References', 'Chapters', 'Words']
-        col_widths = [8, 8, 45, 10, 12]
+        headers = ['Year-Day', 'Year', 'Day', 'References', 'Chapters', 'Words']
+        col_widths = [10, 8, 8, 45, 10, 12]
 
         for col, (header, width) in enumerate(zip(headers, col_widths), 1):
             cell = ws.cell(row=1, column=col, value=header)
@@ -85,16 +86,17 @@ class PlanExporter:
         row = 2
         for year in range(1, 5):
             for rd in yearly[year]:
-                ws.cell(row=row, column=1, value=year).font = DATA_FONT
-                ws.cell(row=row, column=2, value=rd.day_number).font = DATA_FONT
-                ws.cell(row=row, column=3, value=rd.references).font = DATA_FONT
-                ws.cell(row=row, column=4, value=len(rd.chapters)).font = DATA_FONT
-                cell = ws.cell(row=row, column=5, value=rd.total_words)
+                ws.cell(row=row, column=1, value=f'{year}-{rd.day_number}').font = DATA_FONT
+                ws.cell(row=row, column=2, value=year).font = DATA_FONT
+                ws.cell(row=row, column=3, value=rd.day_number).font = DATA_FONT
+                ws.cell(row=row, column=4, value=rd.references).font = DATA_FONT
+                ws.cell(row=row, column=5, value=len(rd.chapters)).font = DATA_FONT
+                cell = ws.cell(row=row, column=6, value=rd.total_words)
                 cell.font = DATA_FONT
                 cell.number_format = '#,##0'
-                for c in range(1, 6):
+                for c in range(1, 7):
                     ws.cell(row=row, column=c).border = THIN_BORDER
                 row += 1
 
-        ws.auto_filter.ref = f'A1:E{row - 1}'
+        ws.auto_filter.ref = f'A1:F{row - 1}'
         ws.freeze_panes = 'A2'

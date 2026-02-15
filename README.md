@@ -1,19 +1,19 @@
 # 4-Year Bible Reading Plan Generator
 
-A Python application that generates customizable 4-year Bible reading plans using SOLID design principles.
+A Python application that generates customizable 4-year Bible reading plans
 
 ## Features
 
 - Load Bible chapter data from Excel
 - Multiple reading strategies:
-  - **Four-Year Grouping**: 12 book groupings per year (one per month)
+  - **Four-Year Grouping**: 12 book groupings per year (one per month) - This is the primary
   - **Daily Plan with Monthly Groupings**: Monthly books + daily Psalms/Proverbs
   - **Balanced**: Distribute by word count
   - **Chronological**: Read in biblical order
 - Export to CSV and JSON formats
 - Clean, maintainable codebase following SOLID principles
 
-## Quick Start
+## Available Plans
 
 ### 1. Four-Year Grouping Plan (Monthly Groupings Only)
 ```bash
@@ -86,10 +86,3 @@ To add a new reading strategy:
 2. Implement the `generate_plan()` method
 3. Use it with the `PlanGenerator` or call directly
 
-## SOLID Principles
-
-- **Single Responsibility**: Each class has one clear purpose
-- **Open/Closed**: Easy to add new strategies without modifying existing code
-- **Liskov Substitution**: All strategies can be used interchangeably
-- **Interface Segregation**: Focused interfaces for each service
-- **Dependency Inversion**: High-level modules depend on abstractions
